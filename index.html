@@ -336,7 +336,17 @@
   /* Card Header */
   .card-header {
     display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px;
+    position: relative;
   }
+  .card-header::after {
+    content: "›";
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%) rotate(90deg);
+    font-size: 16px; color: var(--muted); opacity: 0;
+    transition: opacity 0.2s ease, transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: none;
+  }
+  .agent-card:hover .card-header::after { opacity: 0.45; }
+  .card-header.is-expanded::after { transform: translateY(-50%) rotate(-90deg); opacity: 0.7; }
   .avatar-well {
     width: 52px; height: 52px; border-radius: 18px;
     background: var(--bg); box-shadow: var(--neu-inset-deep);
@@ -376,6 +386,7 @@
     padding: 5px 11px; border-radius: 9999px;
     font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
     white-space: nowrap; box-shadow: var(--neu-extruded-sm); flex-shrink: 0;
+    transition: color 0.35s ease;
   }
   .status-badge .b-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
   .status-badge.running { color: var(--accent); }
@@ -643,6 +654,7 @@
     animation: popIn 0.25s cubic-bezier(.34,1.56,.64,1);
   }
   @keyframes popIn { from{transform:scale(0.85);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes toastBar { from{width:100%} to{width:0%} }
   .modal-icon { font-size: 32px; margin-bottom: 12px; }
   .modal-title {
     font-family: "Plus Jakarta Sans", sans-serif;
@@ -836,7 +848,7 @@ const LOCALES = {
     stopFail: e => `停止失敗: ${e}`,
     pauseNote: "実行中タスクを中断",
     pauseConfirmTitle: id => `${id} を中断?`,
-    pauseConfirmBody: "実行中のサブタスクを中断します。AgentはオンラインのままM。",
+    pauseConfirmBody: "実行中のサブタスクを中断します。Agentはオンラインのままです。",
     pauseConfirmOk: "中断する",
     pauseConfirmCancel: "キャンセル",
     pauseSuccess: id => `${id} 中断しました`,
@@ -992,8 +1004,8 @@ function JellyfishLogo({ running = false, onElectric }) {
 
     // running 时浮动幅度更大、频率更快
     const doFloat = () => {
-      const speed = running ? 0.032 : 0.018;
-      const amp   = running ? 9     : 6;
+      const speed = running ? 0.018 : 0.010;
+      const amp   = running ? 7     : 5;
       floatTRef.current += speed;
       const y = Math.sin(floatTRef.current)       * amp;
       const r = Math.sin(floatTRef.current * 0.7) * (running ? 5 : 3);
@@ -1220,7 +1232,7 @@ function AgentCard({ agent, onDragStart, onDragOver, onDrop, onDragEnd, isDraggi
       onDragEnd={onDragEnd}
     >
       <span className="drag-hint">⠿⠿</span>
-      <div className="card-header" onClick={() => setExpanded(e => !e)} style={{cursor:"pointer"}}>
+      <div className={`card-header${expanded ? " is-expanded" : ""}`} onClick={() => setExpanded(e => !e)} style={{cursor:"pointer"}}>
         <div className="avatar-well">
           <div className={`avatar-inner ${avatarClass(id)}`}>{avatarText(name)}</div>
         </div>
@@ -1340,7 +1352,17 @@ function SkeletonGrid() {
             </div>
           </div>
           <div className="skeleton-line" style={{marginBottom:10}} />
-          <div className="skeleton-line" style={{width:"75%",marginBottom:18}} />
+          <div className="skeleton-line" style={{width:"75%",marginBottom:14}} />
+          {/* context bar skeleton */}
+          <div style={{marginBottom:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <div className="skeleton-line" style={{width:"22%",height:9}} />
+              <div className="skeleton-line" style={{width:"30%",height:9}} />
+            </div>
+            <div style={{height:7,borderRadius:9999,background:"var(--bg)",boxShadow:"var(--neu-inset-sm)",overflow:"hidden"}}>
+              <div className="skeleton-line" style={{width:"45%",height:"100%",borderRadius:9999}} />
+            </div>
+          </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
             {[1,2,3].map(j=>(
               <div key={j} style={{background:"var(--bg)",boxShadow:"var(--neu-inset-deep)",borderRadius:16,padding:"12px 8px"}}>
