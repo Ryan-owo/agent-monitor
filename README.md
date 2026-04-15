@@ -16,7 +16,6 @@
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="Zero dependencies">
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="MIT License">
   <img src="https://img.shields.io/github/v/release/Ryan-owo/agent-monitor?style=flat-square&color=purple" alt="Latest Release">
-  <img src="https://img.shields.io/badge/version-v0.5.2-purple?style=flat-square" alt="v0.5.2">
 </p>
 
 <br>
@@ -35,17 +34,16 @@
 
 ### Features
 
-- 🟢 **Live status** — Running / Idle / Offline per agent, auto-refreshes every 5s
+- 🟢 **Live status** — Running / Idle / Offline per agent, auto-refreshes every 5 s
 - 📊 **Token & cost tracking** — Input / Output tokens and estimated USD cost, aggregated across all sessions
 - 🤖 **Subagent visibility** — See active child agents spawned by each agent
-- 📋 **Current task** — Latest task label extracted from session data; click card header to expand full task + subagent list
-- 🌙 **Dark mode** — Follows system preference, manually toggleable, persisted
+- 📋 **Current task** — Latest task extracted from session data; click a card to expand the full task and subagent list
+- 📈 **Context bar** — Visual context-window usage per agent; turns orange at 70 % and red at 90 %
+- 🔔 **Tab badge** — Browser tab shows `[N] Agent Monitor` while agents are running
+- 🌙 **Dark mode** — Follows system preference, manually toggleable, persisted in localStorage
 - 🌐 **i18n** — Chinese / English / Japanese, persisted in localStorage
-- 🎨 **Neumorphic UI** — Soft tactile design; click 🪼 for a surprise
+- 🎨 **Neumorphic UI** — Soft tactile design with smooth animations
 - ⚡ **Zero dependencies** — Pure Python 3.8+ stdlib + React 18 via CDN
-- 🪼 **Jellyfish mascot** — Idles gently; activates when agents are running; discharges electricity to light up the title
-- 🔔 **Tab badge** — `[N] Agent Monitor` in browser tab when agents are running
-- 📈 **Context bar color** — Turns orange at 70 % and red at 90 % context usage
 
 ### Quickstart
 
@@ -111,20 +109,6 @@ agent-monitor/
 └── README.md
 ```
 
-### Roadmap
-
-- [x] Phase 1 — Live status dashboard, dark mode, i18n
-- [x] Phase 2 — Pause / Stop agent sessions
-- [x] Phase 2 — Live log drawer (transcript JSONL)
-- [x] Phase 2 — Drag-to-reorder agent cards
-- [x] Phase 2 — Context window progress bar with color warnings
-- [x] Phase 2 — Jellyfish mascot with running animation & electric discharge effect
-- [x] Phase 2 — Card expand for full task detail
-- [x] Phase 2 — Tab title badge
-- [ ] Phase 3 — Token sparkline (per-card 60 px SVG)
-- [ ] Phase 3 — Multi-server support
-- [ ] Phase 4 — macOS menu bar app (Tauri)
-
 ---
 
 <a name="中文"></a>
@@ -136,14 +120,13 @@ agent-monitor/
 - 🟢 **实时状态** — 每个 Agent 的执行中 / 空闲 / 离线状态，每 5 秒自动刷新
 - 📊 **Token 与费用追踪** — 输入/输出 Token 用量与估算美元费用，跨所有 Session 聚合
 - 🤖 **子 Agent 可见性** — 查看每个 Agent 当前活跃的子 Agent 列表
-- 📋 **当前任务** — 从 Session 数据中提取最新任务标签；点击卡片顶部可展开完整任务文本与子 Agent 列表
+- 📋 **当前任务** — 从 Session 数据中提取最新任务标签；点击卡片可展开完整任务文本与子 Agent 列表
+- 📈 **上下文进度条** — 直观显示每个 Agent 的上下文窗口用量；70 % 变橙色，90 % 变红色
+- 🔔 **Tab 角标** — 有 Agent 运行时浏览器标签显示 `[N] Agent Monitor`
 - 🌙 **深色模式** — 跟随系统偏好，可手动切换，设置持久化
 - 🌐 **多语言** — 中文 / 英文 / 日文，设置持久化到 localStorage
-- 🎨 **软 UI 设计** — Neumorphism 触觉风格；点击 🪼 有彩蛋
+- 🎨 **软 UI 设计** — Neumorphism 触觉风格，流畅动效
 - ⚡ **零依赖** — 纯 Python 3.8+ 标准库 + React 18（CDN）
-- 🪼 **水母吉祥物** — 静息时缓慢漂浮；有 Agent 运行时加速活跃并随机放电点亮标题
-- 🔔 **Tab 角标** — 有 Agent 运行时浏览器标签显示 `[N] Agent Monitor`
-- 📈 **上下文进度条** — 70 % 变橙色、90 % 变红色，数字颜色同步跟随
 
 ### 快速开始
 
@@ -207,20 +190,6 @@ agent-monitor/
 ├── .gitignore
 └── README.md
 ```
-
-### 开发计划
-
-- [x] Phase 1 — 实时状态仪表盘、深色模式、多语言
-- [x] Phase 2 — 暂停 / 终止 Agent Session
-- [x] Phase 2 — 实时日志抽屉（读取 transcript JSONL）
-- [x] Phase 2 — 拖拽排序卡片
-- [x] Phase 2 — 上下文窗口进度条 + 颜色预警
-- [x] Phase 2 — 水母吉祥物（运行动效 + 放电点亮标题）
-- [x] Phase 2 — 卡片展开完整任务详情
-- [x] Phase 2 — 浏览器 Tab 角标
-- [ ] Phase 3 — Token 迷你折线图（卡片内 60 px SVG）
-- [ ] Phase 3 — 多 Server 支持
-- [ ] Phase 4 — macOS 系统托盘应用（Tauri）
 
 ---
 
