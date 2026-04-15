@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Light Mode (Neumorphism Cool Grey) ── */
+  :root {
+    --bg: #E0E5EC;
+    --fg: #3D4852;
+    --muted: #6B7280;
+    --surface: #E0E5EC;
+    --accent: #6C63FF;
+    --accent-light: #8B84FF;
+    --accent-teal: #38B2AC;
+    --danger: #E57373;
+    --neu-extruded:      9px 9px 16px rgb(163,177,198,0.6),  -9px -9px 16px rgba(255,255,255,0.5);
+    --neu-extruded-h:   12px 12px 20px rgb(163,177,198,0.7), -12px -12px 20px rgba(255,255,255,0.6);
+    --neu-extruded-sm:   5px  5px 10px rgb(163,177,198,0.6),  -5px  -5px 10px rgba(255,255,255,0.5);
+    --neu-inset:     inset  6px  6px 10px rgb(163,177,198,0.6), inset  -6px  -6px 10px rgba(255,255,255,0.5);
+    --neu-inset-deep: inset 10px 10px 20px rgb(163,177,198,0.7), inset -10px -10px 20px rgba(255,255,255,0.6);
+    --neu-inset-sm:  inset  3px  3px  6px rgb(163,177,198,0.6), inset  -3px  -3px  6px rgba(255,255,255,0.5);
+    --pill-border: transparent;
+  }
+
+  /* ── Dark Mode ── */
+  [data-theme="dark"] {
+    --bg: #1C1F26;
+    --fg: #E2E8F0;
+    --muted: #8892A4;
+    --surface: #1C1F26;
+    --accent: #8B84FF;
+    --accent-light: #A8A4FF;
+    --accent-teal: #4FD1C5;
+    --danger: #FC8181;
+    --neu-extruded:      6px  6px 12px rgba(0,0,0,0.45),    -6px  -6px 12px rgba(255,255,255,0.04);
+    --neu-extruded-h:    9px  9px 18px rgba(0,0,0,0.55),    -9px  -9px 18px rgba(255,255,255,0.05);
+    --neu-extruded-sm:   4px  4px  8px rgba(0,0,0,0.4),     -4px  -4px  8px rgba(255,255,255,0.03);
+    --neu-inset:     inset  5px  5px 10px rgba(0,0,0,0.5),  inset  -5px  -5px 10px rgba(255,255,255,0.03);
+    --neu-inset-deep: inset  8px  8px 16px rgba(0,0,0,0.6), inset  -8px  -8px 16px rgba(255,255,255,0.04);
+    --neu-inset-sm:  inset  3px  3px  6px rgba(0,0,0,0.45), inset  -3px  -3px  6px rgba(255,255,255,0.03);
+    --pill-border: rgba(255,255,255,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "DM Sans", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+
+  .font-display { font-family: "Plus Jakarta Sans", sans-serif; }
+
+  /* ── App Shell ── */
+  .app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 56px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    gap: 12px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  /* ── Logo (free-floating jellyfish) ── */
+  .logo-jellyfish {
+    font-size: 36px;
+    line-height: 1;
+    flex-shrink: 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex; align-items: center; justify-content: center;
+    animation: jelly-float 3.6s ease-in-out infinite;
+    transition: transform 0.15s ease-out;
+    transform-origin: center bottom;
+  }
+  .logo-jellyfish:hover {
+    animation: jelly-wiggle 0.6s ease-in-out, jelly-float 3.6s ease-in-out 0.6s infinite;
+  }
+  .logo-jellyfish.pop {
+    animation: jelly-pop 0.55s cubic-bezier(.36,.07,.19,.97) both !important;
+  }
+  @keyframes jelly-float {
+    0%,100% { transform: translateY(0px) rotate(-2deg); }
+    30%     { transform: translateY(-7px) rotate(1deg); }
+    60%     { transform: translateY(-4px) rotate(-1deg); }
+  }
+  @keyframes jelly-wiggle {
+    0%   { transform: rotate(0deg) scale(1); }
+    20%  { transform: rotate(-10deg) scale(1.15); }
+    40%  { transform: rotate(10deg) scale(1.1); }
+    60%  { transform: rotate(-6deg) scale(1.05); }
+    80%  { transform: rotate(4deg) scale(1.02); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+  @keyframes jelly-pop {
+    0%   { transform: scale(1) rotate(0deg); }
+    15%  { transform: scale(1.4) rotate(-12deg); }
+    30%  { transform: scale(0.85) rotate(8deg); }
+    50%  { transform: scale(1.25) rotate(-5deg); }
+    70%  { transform: scale(0.95) rotate(3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-5px); }
+  }
+  .header-title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--fg);
+  }
+  .header-sub {
+    font-size: 12px; color: var(--muted);
+    margin-top: 2px; font-weight: 400;
+  }
+
+  /* ── Header Controls ── */
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Live Pill — standalone, left of toolbar */
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg);
+    box-shadow: var(--neu-inset-sm);
+    border-radius: 9999px;
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    box-shadow: 0 0 5px var(--accent-teal);
+    flex-shrink: 0;
+  }
+  .status-dot.offline { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
+  .status-dot.live { animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* Toolbar groove — lang + theme in one unified container */
+  .ctrl-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg);
+    box-shadow: var(--neu-inset-sm);
+    border-radius: 16px;
+    padding: 4px;
+  }
+  .ctrl-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(163,177,198,0.4);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .ctrl-divider {
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* Language Switcher (inside toolbar) */
+  .lang-switcher {
+    display: flex;
+    gap: 2px;
+  }
+  .lang-btn {
+    border: none;
+    background: transparent;
+    border-radius: 11px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: "DM Sans", sans-serif;
+    color: var(--muted);
+    cursor: pointer;
+    transition: box-shadow 0.25s ease-out, color 0.2s, transform 0.15s;
+    outline: none;
+    letter-spacing: 0.03em;
+    line-height: 1;
+  }
+  .lang-btn:hover { color: var(--fg); }
+  .lang-btn.active {
+    background: var(--bg);
+    box-shadow: var(--neu-extruded-sm);
+    color: var(--accent);
+  }
+  .lang-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Theme Toggle (inside toolbar) */
+  .theme-toggle {
+    width: 34px; height: 34px;
+    border-radius: 11px;
+    border: none;
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: box-shadow 0.25s ease-out, transform 0.2s ease-out, background 0.2s;
+    outline: none;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover {
+    background: var(--bg);
+    box-shadow: var(--neu-extruded-sm);
+    transform: translateY(-1px);
+  }
+  .theme-toggle:active {
+    box-shadow: var(--neu-inset-sm);
+    transform: translateY(0.5px);
+  }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── Summary Bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: var(--bg);
+    box-shadow: var(--neu-extruded);
+    border-radius: 24px;
+    padding: 20px 22px;
+    transition: box-shadow 0.3s ease-out, transform 0.3s ease-out;
+  }
+  .summary-card:hover {
+    box-shadow: var(--neu-extruded-h);
+    transform: translateY(-2px);
+  }
+  .summary-card .s-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .summary-card .s-value {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 28px; font-weight: 800;
+    letter-spacing: -0.03em; color: var(--fg);
+    line-height: 1; margin-bottom: 4px;
+  }
+  .summary-card .s-value.c-accent { color: var(--accent); }
+  .summary-card .s-value.c-teal   { color: var(--accent-teal); }
+  .summary-card .s-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  /* ── Agent Grid ── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── Agent Card ── */
+  .agent-card {
+    background: var(--bg);
+    box-shadow: var(--neu-extruded);
+    border-radius: 32px;
+    padding: 28px;
+    transition: box-shadow 0.3s ease-out, transform 0.3s ease-out;
+    position: relative;
+  }
+  .agent-card:hover {
+    box-shadow: var(--neu-extruded-h);
+    transform: translateY(-2px);
+  }
+  .agent-card.running::after {
+    content: '';
+    position: absolute; top: 24px; right: 24px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,99,255,.12), 0 0 10px rgba(108,99,255,.35);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  /* Card Header */
+  .card-header {
+    display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px;
+  }
+  .avatar-well {
+    width: 52px; height: 52px; border-radius: 18px;
+    background: var(--bg); box-shadow: var(--neu-inset-deep);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .avatar-inner {
+    width: 36px; height: 36px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px; font-weight: 800;
+    box-shadow: var(--neu-extruded-sm);
+    color: #fff; flex-shrink: 0;
+  }
+  .avatar-inner.main      { background: linear-gradient(135deg,#6C63FF,#8B84FF); }
+  .avatar-inner.coder     { background: linear-gradient(135deg,#11998e,#38B2AC); }
+  .avatar-inner.architect { background: linear-gradient(135deg,#f093fb,#c471ed); }
+  .avatar-inner.quality   { background: linear-gradient(135deg,#4facfe,#0099f7); }
+  .avatar-inner.writer    { background: linear-gradient(135deg,#fa709a,#fee140); }
+  .avatar-inner.default   { background: linear-gradient(135deg,#a8c0ff,#3f2b96); }
+
+  .agent-name-block { flex:1; min-width:0; }
+  .agent-name {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--fg); margin-bottom: 3px;
+  }
+  .agent-model {
+    font-size: 11px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 180px; font-weight: 400;
+  }
+
+  /* Status Badge */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 9999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+    white-space: nowrap; box-shadow: var(--neu-extruded-sm); flex-shrink: 0;
+  }
+  .status-badge .b-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .status-badge.running { color: var(--accent); }
+  .status-badge.running .b-dot { background: var(--accent); animation: blink 1.5s infinite; }
+  .status-badge.idle  { color: var(--accent-teal); }
+  .status-badge.idle .b-dot  { background: var(--accent-teal); }
+  .status-badge.offline { color: var(--muted); }
+  .status-badge.offline .b-dot { background: #B0BAC9; }
+
+  /* Task Well */
+  .task-well {
+    background: var(--bg); box-shadow: var(--neu-inset);
+    border-radius: 16px; padding: 12px 14px; margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 10px; min-height: 50px;
+  }
+  .task-icon-wrap {
+    width: 28px; height: 28px; border-radius: 9px;
+    background: var(--bg); box-shadow: var(--neu-extruded-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; margin-top: 1px;
+  }
+  .task-text {
+    font-size: 12px; color: var(--muted); line-height: 1.45;
+    word-break: break-word; font-weight: 400; flex:1; padding-top: 4px;
+  }
+  .task-text.active { color: var(--fg); font-weight: 500; }
+
+  /* Stats */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px;
+  }
+  .stat-well {
+    background: var(--bg); box-shadow: var(--neu-inset-deep);
+    border-radius: 16px; padding: 12px 8px; text-align: center;
+  }
+  .stat-val {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--fg); line-height:1; margin-bottom: 4px;
+  }
+  .stat-lbl {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+  }
+
+  /* Meta row */
+  .meta-row {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .meta-pill {
+    background: var(--bg); box-shadow: var(--neu-extruded-sm);
+    border-radius: 9999px; padding: 4px 10px;
+    font-size: 11px; font-weight: 500; color: var(--muted); white-space: nowrap;
+  }
+  .meta-pill.active-accent { color: var(--accent); box-shadow: var(--neu-inset-sm); }
+  .last-seen { font-size: 11px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+
+  /* Subagents */
+  .subagents-section {
+    margin-bottom: 16px; background: var(--bg);
+    box-shadow: var(--neu-inset); border-radius: 16px; padding: 12px 14px;
+  }
+  .subagents-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px;
+  }
+  .subagent-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .subagent-row + .subagent-row { border-top: 1px solid rgba(163,177,198,.2); }
+  .subagent-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 5px rgba(108,99,255,.4);
+    animation: blink 1.5s infinite; flex-shrink: 0;
+  }
+  .subagent-label {
+    font-size: 11px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex:1;
+  }
+
+  /* Buttons */
+  .actions-row { display: flex; gap: 8px; }
+  .btn {
+    flex:1; padding: 10px 8px; border-radius: 16px; border: none;
+    background: var(--bg); box-shadow: var(--neu-extruded-sm);
+    color: var(--muted); font-size: 12px; font-weight: 700;
+    font-family: "DM Sans", sans-serif; cursor: pointer;
+    transition: box-shadow 0.3s ease-out, transform 0.3s ease-out, color 0.2s;
+    text-align: center; outline: none;
+  }
+  .btn:hover:not(:disabled) { box-shadow: var(--neu-extruded); transform: translateY(-1px); color: var(--fg); }
+  .btn:active:not(:disabled) { box-shadow: var(--neu-inset-sm); transform: translateY(.5px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.primary { color: var(--accent); }
+  .btn.danger:hover:not(:disabled) { color: var(--danger); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: var(--neu-inset-sm); }
+
+  /* Error */
+  .error-banner {
+    background: var(--bg); box-shadow: var(--neu-extruded);
+    border-radius: 20px; padding: 16px 20px; color: var(--danger);
+    margin-bottom: 24px; font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* Skeleton */
+  .skeleton-card { background: var(--bg); box-shadow: var(--neu-extruded); border-radius: 32px; padding: 28px; }
+  .skeleton-line {
+    background: linear-gradient(90deg,
+      rgba(163,177,198,.25) 25%, rgba(255,255,255,.4) 50%, rgba(163,177,198,.25) 75%);
+    background-size: 200% 100%;
+    animation: skel 1.6s infinite;
+    border-radius: 8px; height: 12px;
+  }
+  [data-theme="dark"] .skeleton-line {
+    background: linear-gradient(90deg,
+      rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%);
+    background-size: 200% 100%;
+  }
+  @keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Empty */
+  .empty-state { text-align: center; padding: 80px 0; color: var(--muted); }
+  .empty-state .empty-icon {
+    font-size: 48px; margin-bottom: 16px; display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app { padding: 20px 16px 40px; }
+    .summary-bar { grid-template-columns: repeat(2,1fr); gap: 12px; }
+    .agents-grid { grid-template-columns: 1fr; }
+    .header-title { font-size: 17px; }
+    .s-value { font-size: 22px !important; }
+    .live-pill .live-text { display: none; }
+    .header { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, createContext, useContext } = React;
+
+const API_BASE = window.location.origin;  // served by server.py on same origin
+const POLL_INTERVAL = 5000;
+
+// ── i18n ─────────────────────────────────────────────────────────────────────
+const LOCALES = {
+  zh: {
+    appName: "Agent Monitor",
+    appSub: "多 Agent 工作状态总览",
+    running: "执行中", idle: "空闲", offline: "离线",
+    justNow: "刚刚",
+    secondsAgo: s => `${s}秒前`,
+    minutesAgo: m => `${m}分钟前`,
+    hoursAgo: h => `${h}小时前`,
+    daysAgo: d => `${d}天前`,
+    never: "从未",
+    refreshed: t => `${t}刷新`,
+    connecting: "连接中…",
+    totalAgents: n => `共 ${n} 个 Agent`,
+    offlineCount: n => `${n} 个离线`,
+    totalRound: "本轮累计",
+    estimated: "估算值",
+    tokens: "Tokens",
+    output: "输出",
+    cost: "费用",
+    sessions: n => `${n} sessions`,
+    activeCount: n => `${n} 运行中`,
+    subagentCount: n => `${n} subagents`,
+    viewLog: "查看日志",
+    pause: "暂停",
+    stop: "终止",
+    activeSubagents: "活跃子 Agent",
+    taskRunning: "执行中…",
+    taskIdle: "等待任务",
+    taskOffline: "Agent 离线",
+    errorMsg: u => `无法连接到监控服务 (${u})，请确认 server.py 已启动`,
+    noAgents: "未发现任何 Agent",
+    running_count: "执行中",
+    idle_count: "空闲",
+    total_tokens: "总 Tokens",
+    total_cost: "总费用",
+  },
+  en: {
+    appName: "Agent Monitor",
+    appSub: "Multi-agent status overview",
+    running: "Running", idle: "Idle", offline: "Offline",
+    justNow: "Just now",
+    secondsAgo: s => `${s}s ago`,
+    minutesAgo: m => `${m}m ago`,
+    hoursAgo: h => `${h}h ago`,
+    daysAgo: d => `${d}d ago`,
+    never: "Never",
+    refreshed: t => `Refreshed ${t}`,
+    connecting: "Connecting…",
+    totalAgents: n => `${n} agents total`,
+    offlineCount: n => `${n} offline`,
+    totalRound: "This session",
+    estimated: "Estimated",
+    tokens: "Tokens",
+    output: "Output",
+    cost: "Cost",
+    sessions: n => `${n} sessions`,
+    activeCount: n => `${n} active`,
+    subagentCount: n => `${n} subagents`,
+    viewLog: "View Log",
+    pause: "Pause",
+    stop: "Stop",
+    activeSubagents: "Active Subagents",
+    taskRunning: "Running…",
+    taskIdle: "Waiting for task",
+    taskOffline: "Agent offline",
+    errorMsg: u => `Cannot connect to monitor service (${u}). Make sure server.py is running.`,
+    noAgents: "No agents found",
+    running_count: "Running",
+    idle_count: "Idle",
+    total_tokens: "Total Tokens",
+    total_cost: "Total Cost",
+  },
+  ja: {
+    appName: "Agent Monitor",
+    appSub: "マルチエージェント状態一覧",
+    running: "実行中", idle: "待機中", offline: "オフライン",
+    justNow: "たった今",
+    secondsAgo: s => `${s}秒前`,
+    minutesAgo: m => `${m}分前`,
+    hoursAgo: h => `${h}時間前`,
+    daysAgo: d => `${d}日前`,
+    never: "なし",
+    refreshed: t => `${t}更新`,
+    connecting: "接続中…",
+    totalAgents: n => `計 ${n} Agent`,
+    offlineCount: n => `${n} オフライン`,
+    totalRound: "今回合計",
+    estimated: "推定",
+    tokens: "トークン",
+    output: "出力",
+    cost: "費用",
+    sessions: n => `${n} セッション`,
+    activeCount: n => `${n} 稼働中`,
+    subagentCount: n => `${n} サブAgent`,
+    viewLog: "ログ確認",
+    pause: "一時停止",
+    stop: "停止",
+    activeSubagents: "稼働中サブAgent",
+    taskRunning: "実行中…",
+    taskIdle: "タスク待機",
+    taskOffline: "オフライン",
+    errorMsg: u => `監視サービス(${u})に接続できません。server.pyを確認してください。`,
+    noAgents: "Agentが見つかりません",
+    running_count: "実行中",
+    idle_count: "待機中",
+    total_tokens: "総トークン",
+    total_cost: "総費用",
+  },
+};
+
+// ── Context ──────────────────────────────────────────────────────────────────
+const ThemeCtx = createContext({ theme: "light", toggleTheme: () => {} });
+const LangCtx  = createContext({ lang: "zh", t: k => k });
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmtTokens(n) {
+  if (!n) return "0";
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + "K";
+  return String(n);
+}
+function fmtCost(usd) {
+  if (!usd) return "$0.00";
+  if (usd < 0.01) return "<$0.01";
+  return "$" + usd.toFixed(2);
+}
+function useTimeAgo(t) {
+  const { t: tr } = useContext(LangCtx);
+  if (!t) return tr.never;
+  const diff = (Date.now() - new Date(t).getTime()) / 1000;
+  if (diff < 30)   return tr.justNow;
+  if (diff < 60)   return tr.secondsAgo(Math.floor(diff));
+  if (diff < 3600) return tr.minutesAgo(Math.floor(diff / 60));
+  if (diff < 86400)return tr.hoursAgo(Math.floor(diff / 3600));
+  return tr.daysAgo(Math.floor(diff / 86400));
+}
+function avatarClass(id) {
+  return ["main","coder","architect","quality","writer"].includes(id.toLowerCase())
+    ? id.toLowerCase() : "default";
+}
+function avatarText(name) {
+  const m = { main:"PM", coder:"Co", architect:"Ar", quality:"QA", writer:"Wr" };
+  return m[name.toLowerCase()] || name.slice(0,2).toUpperCase();
+}
+
+// ── Components ───────────────────────────────────────────────────────────────
+function JellyfishLogo() {
+  const [popping, setPopping] = React.useState(false);
+  const handleClick = () => {
+    setPopping(true);
+    setTimeout(() => setPopping(false), 600);
+  };
+  return (
+    <span
+      className={`logo-jellyfish ${popping ? "pop" : ""}`}
+      onClick={handleClick}
+      role="img"
+      aria-label="jellyfish"
+      title="🪼"
+    >
+      🪼
+    </span>
+  );
+}
+
+function StatusBadge({ status }) {
+  const { t } = useContext(LangCtx);
+  const label = { running: t.running, idle: t.idle, offline: t.offline }[status] || status;
+  return (
+    <span className={`status-badge ${status}`}>
+      <span className="b-dot" />{label}
+    </span>
+  );
+}
+
+function StatWell({ val, label }) {
+  return (
+    <div className="stat-well">
+      <div className="stat-val">{val}</div>
+      <div className="stat-lbl">{label}</div>
+    </div>
+  );
+}
+
+function AgentCard({ agent }) {
+  const { t } = useContext(LangCtx);
+  const { id, name, status, currentTask, lastSeen, sessions, usage, model } = agent;
+  const activeSubs = sessions?.activeSubagents || [];
+  const ago = useTimeAgo(lastSeen);
+
+  const taskText = currentTask
+    || (status === "running" ? t.taskRunning : status === "idle" ? t.taskIdle : t.taskOffline);
+  const taskIcon = { running: "⚡", idle: "✓", offline: "—" }[status] || "—";
+
+  return (
+    <div className={`agent-card ${status}`}>
+      <div className="card-header">
+        <div className="avatar-well">
+          <div className={`avatar-inner ${avatarClass(id)}`}>{avatarText(name)}</div>
+        </div>
+        <div className="agent-name-block">
+          <div className="agent-name">{name}</div>
+          {model && <div className="agent-model">{model}</div>}
+        </div>
+        <StatusBadge status={status} />
+      </div>
+
+      <div className="task-well">
+        <div className="task-icon-wrap">{taskIcon}</div>
+        <span className={`task-text ${status === "running" ? "active" : ""}`}>{taskText}</span>
+      </div>
+
+      <div className="stats-row">
+        <StatWell val={fmtTokens(usage?.totalTokens)}    label={t.tokens} />
+        <StatWell val={fmtTokens(usage?.outputTokens)}   label={t.output} />
+        <StatWell val={fmtCost(usage?.estimatedCostUsd)} label={t.cost}   />
+      </div>
+
+      <div className="meta-row">
+        <div className="pill-group">
+          <span className="meta-pill">{t.sessions(sessions?.total || 0)}</span>
+          {(sessions?.subagents || 0) > 0 && (
+            <span className={`meta-pill ${activeSubs.length > 0 ? "active-accent" : ""}`}>
+              {activeSubs.length > 0
+                ? t.activeCount(activeSubs.length)
+                : t.subagentCount(sessions.subagents)}
+            </span>
+          )}
+        </div>
+        <span className="last-seen">{ago}</span>
+      </div>
+
+      {activeSubs.length > 0 && (
+        <div className="subagents-section">
+          <div className="subagents-label">{t.activeSubagents}</div>
+          {activeSubs.slice(0,3).map(sa => (
+            <div className="subagent-row" key={sa.sessionId}>
+              <div className="subagent-dot" />
+              <span className="subagent-label">{sa.label || sa.sessionId.slice(0,16)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="actions-row">
+        <button className="btn primary" disabled>{t.viewLog}</button>
+        <button className="btn" disabled={status !== "running"}>{t.pause}</button>
+        <button className="btn danger" disabled={status !== "running"}>{t.stop}</button>
+      </div>
+    </div>
+  );
+}
+
+function SummaryBar({ agents }) {
+  const { t } = useContext(LangCtx);
+  const running = agents.filter(a => a.status === "running").length;
+  const idle    = agents.filter(a => a.status === "idle").length;
+  const offline = agents.filter(a => a.status === "offline").length;
+  const cost   = agents.reduce((s,a) => s + (a.usage?.estimatedCostUsd || 0), 0);
+  const tokens = agents.reduce((s,a) => s + (a.usage?.totalTokens || 0), 0);
+  return (
+    <div className="summary-bar">
+      <div className="summary-card">
+        <div className="s-label">{t.running_count}</div>
+        <div className={`s-value font-display ${running > 0 ? "c-accent" : ""}`}>{running}</div>
+        <div className="s-sub">{t.totalAgents(agents.length)}</div>
+      </div>
+      <div className="summary-card">
+        <div className="s-label">{t.idle_count}</div>
+        <div className="s-value font-display c-teal">{idle}</div>
+        <div className="s-sub">{t.offlineCount(offline)}</div>
+      </div>
+      <div className="summary-card">
+        <div className="s-label">{t.total_tokens}</div>
+        <div className="s-value font-display">{fmtTokens(tokens)}</div>
+        <div className="s-sub">{t.totalRound}</div>
+      </div>
+      <div className="summary-card">
+        <div className="s-label">{t.total_cost}</div>
+        <div className="s-value font-display">{fmtCost(cost)}</div>
+        <div className="s-sub">{t.estimated}</div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonGrid() {
+  return (
+    <div className="agents-grid">
+      {[1,2,3].map(i => (
+        <div className="skeleton-card" key={i}>
+          <div style={{display:"flex",gap:14,marginBottom:20,alignItems:"center"}}>
+            <div style={{width:52,height:52,borderRadius:18,background:"var(--bg)",boxShadow:"var(--neu-inset-deep)"}} />
+            <div style={{flex:1}}>
+              <div className="skeleton-line" style={{width:"50%",marginBottom:8}} />
+              <div className="skeleton-line" style={{width:"35%",height:9}} />
+            </div>
+          </div>
+          <div className="skeleton-line" style={{marginBottom:10}} />
+          <div className="skeleton-line" style={{width:"75%",marginBottom:18}} />
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            {[1,2,3].map(j=>(
+              <div key={j} style={{background:"var(--bg)",boxShadow:"var(--neu-inset-deep)",borderRadius:16,padding:"12px 8px"}}>
+                <div className="skeleton-line" style={{width:"55%",margin:"0 auto 6px"}} />
+                <div className="skeleton-line" style={{width:"40%",height:9,margin:"0 auto"}} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  // Theme
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const [theme, setTheme] = useState(() => localStorage.getItem("am-theme") || (prefersDark ? "dark" : "light"));
+  const toggleTheme = useCallback(() => {
+    setTheme(t => { const n = t === "light" ? "dark" : "light"; localStorage.setItem("am-theme", n); return n; });
+  }, []);
+
+  // Language
+  const [lang, setLang] = useState(() => localStorage.getItem("am-lang") || "zh");
+  const switchLang = useCallback(l => { setLang(l); localStorage.setItem("am-lang", l); }, []);
+  const t = LOCALES[lang] || LOCALES.zh;
+
+  // Sync theme to DOM
+  useEffect(() => { document.documentElement.setAttribute("data-theme", theme); }, [theme]);
+
+  // Data
+  const [agents, setAgents]         = useState([]);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [connected, setConnected]   = useState(true);
+  const [error, setError]           = useState(null);
+  const [loading, setLoading]       = useState(true);
+
+  const fetchAgents = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/agents`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setAgents(data.agents || []);
+      setLastRefresh(new Date());
+      setConnected(true); setError(null); setLoading(false);
+    } catch {
+      setConnected(false);
+      setError(t.errorMsg(API_BASE));
+      setLoading(false);
+    }
+  }, [lang]);
+
+  useEffect(() => {
+    fetchAgents();
+    const timer = setInterval(fetchAgents, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [fetchAgents]);
+
+  // Time ago for refresh
+  const refreshAgo = (() => {
+    if (!lastRefresh) return t.connecting;
+    const diff = (Date.now() - lastRefresh.getTime()) / 1000;
+    let time;
+    if (diff < 30)   time = t.justNow;
+    else if (diff < 60) time = t.secondsAgo(Math.floor(diff));
+    else time = t.minutesAgo(Math.floor(diff / 60));
+    return t.refreshed(time);
+  })();
+
+  return (
+    <ThemeCtx.Provider value={{ theme, toggleTheme }}>
+      <LangCtx.Provider value={{ lang, t }}>
+        <div className="app">
+          {/* Header */}
+          <div className="header">
+            <div className="header-left">
+              <JellyfishLogo />
+              <div>
+                <div className="header-title font-display">{t.appName}</div>
+                <div className="header-sub">{t.appSub}</div>
+              </div>
+            </div>
+
+            <div className="header-controls">
+              {/* Live indicator */}
+              <div className="live-pill">
+                <div className={`status-dot ${connected ? "live" : "offline"}`} />
+                <span className="live-text">{refreshAgo}</span>
+              </div>
+
+              {/* Unified toolbar: language + divider + theme */}
+              <div className="ctrl-toolbar" role="group" aria-label="Controls">
+                <div className="lang-switcher">
+                  {Object.keys(LOCALES).map(l => (
+                    <button
+                      key={l}
+                      className={`lang-btn ${lang === l ? "active" : ""}`}
+                      onClick={() => switchLang(l)}
+                      aria-pressed={lang === l}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <div className="ctrl-divider" />
+                <button
+                  className="theme-toggle"
+                  onClick={toggleTheme}
+                  aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+                  title={theme === "light" ? "Dark mode" : "Light mode"}
+                >
+                  {theme === "light" ? "🌙" : "☀️"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && <div className="error-banner">⚠️ {error}</div>}
+
+          {/* Loading */}
+          {loading && !error && <SkeletonGrid />}
+
+          {/* Content */}
+          {!loading && agents.length > 0 && (
+            <>
+              <SummaryBar agents={agents} />
+              <div className="agents-grid">
+                {agents.map(a => <AgentCard key={a.id} agent={a} />)}
+              </div>
+            </>
+          )}
+
+          {/* Empty */}
+          {!loading && agents.length === 0 && !error && (
+            <div className="empty-state">
+              <span className="empty-icon">🪼</span>
+              {t.noAgents}
+            </div>
+          )}
+        </div>
+      </LangCtx.Provider>
+    </ThemeCtx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
