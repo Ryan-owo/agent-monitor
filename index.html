@@ -130,6 +130,21 @@
     font-size: 22px; font-weight: 800;
     letter-spacing: -0.03em;
     color: var(--fg);
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+  }
+  .header-title.electrified {
+    color: var(--accent-light);
+    text-shadow:
+      0 0 6px var(--accent),
+      0 0 18px var(--accent),
+      0 0 36px var(--accent-teal),
+      0 0 2px rgba(255,255,255,0.5);
+    animation: electric-flicker 0.1s steps(1) infinite;
+  }
+  @keyframes electric-flicker {
+    0%,100% { opacity: 1;    text-shadow: 0 0 6px var(--accent), 0 0 18px var(--accent), 0 0 36px var(--accent-teal); }
+    40%      { opacity: 0.88; text-shadow: 0 0 14px var(--accent), 0 0 32px var(--accent-teal), 0 0 50px var(--accent); }
+    70%      { opacity: 0.96; text-shadow: 0 0 4px var(--accent), 0 0 12px var(--accent); }
   }
   .header-sub {
     font-size: 12px; color: var(--muted);
@@ -502,7 +517,10 @@
   }
   .ctx-numbers {
     font-size: 10px; color: var(--muted); font-weight: 500;
+    transition: color 0.4s ease;
   }
+  .ctx-section.warn     .ctx-numbers { color: #e8973a; }
+  .ctx-section.critical .ctx-numbers { color: var(--danger); }
   .ctx-track {
     height: 7px; border-radius: 9999px;
     background: var(--bg); box-shadow: var(--neu-inset-sm);
@@ -523,6 +541,27 @@
     animation: pulse-fill 1s ease-in-out infinite;
   }
   @keyframes pulse-fill { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  /* ── Card Expand Panel ── */
+  .expand-panel {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: var(--neu-inset-sm);
+    background: var(--bg);
+    animation: expandIn 0.22s cubic-bezier(.34,1.56,.64,1);
+    overflow: hidden;
+  }
+  @keyframes expandIn {
+    from { opacity: 0; transform: scaleY(0.85); transform-origin: top; }
+    to   { opacity: 1; transform: scaleY(1); }
+  }
+  .expand-task-full {
+    font-size: 12px; color: var(--fg); line-height: 1.6;
+    word-break: break-word; margin-bottom: 6px;
+  }
+  .expand-subs { display: flex; flex-direction: column; gap: 4px; }
+  .expand-sub-row { display: flex; align-items: center; gap: 6px; }
 
   /* ── Log Drawer ── */
   .drawer-overlay {
@@ -906,7 +945,7 @@ function JellyfishSVG({ bodyColor, tentacleColor, glowColor, running }) {
   );
 }
 
-function JellyfishLogo({ running = false }) {
+function JellyfishLogo({ running = false, onElectric }) {
   const jellyRef    = React.useRef(null);
   const wrapRef     = React.useRef(null);
   const paletteRef  = React.useRef(0);
@@ -966,6 +1005,21 @@ function JellyfishLogo({ running = false }) {
 
     return () => cancelAnimationFrame(floatRafRef.current);
   }, [running]);   // running 变化时重启动效
+
+  // 放电：running 时随机间隔触发 onElectric，点亮旁边的标题文字
+  React.useEffect(() => {
+    if (!running || !onElectric) return;
+    let tid;
+    const schedule = () => {
+      tid = setTimeout(() => {
+        onElectric(true);
+        setTimeout(() => onElectric(false), 300 + Math.random() * 350);
+        schedule();
+      }, 2000 + Math.random() * 3000);
+    };
+    schedule();
+    return () => clearTimeout(tid);
+  }, [running, onElectric]);
 
   const [bodyColor, tentacleColor, glowColor] = JELLY_PALETTES[palette];
 
@@ -1090,7 +1144,7 @@ function ContextBar({ context }) {
   };
 
   return (
-    <div className="ctx-section">
+    <div className={`ctx-section ${fillClass}`}>
       <div className="ctx-header">
         <span className="ctx-label">{t.ctx || "Context"}</span>
         <span className="ctx-numbers">{fmtCtx(used)} / {fmtCtx(limit)} &nbsp;·&nbsp; {pct}%</span>
@@ -1120,6 +1174,7 @@ function ConfirmModal({ title, body, onConfirm, onCancel, confirmLabel, cancelLa
 }
 
 function AgentCard({ agent, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, isDragOver, onLogOpen, onStopRequest, onPauseRequest }) {
+  const [expanded, setExpanded] = React.useState(false);
   const { t } = useContext(LangCtx);
   const { id, name, status, currentTask, lastSeen, sessions, usage, model, context } = agent;
   const activeSubs = sessions?.activeSubagents || [];
@@ -1146,7 +1201,7 @@ function AgentCard({ agent, onDragStart, onDragOver, onDrop, onDragEnd, isDraggi
       onDragEnd={onDragEnd}
     >
       <span className="drag-hint">⠿⠿</span>
-      <div className="card-header">
+      <div className="card-header" onClick={() => setExpanded(e => !e)} style={{cursor:"pointer"}}>
         <div className="avatar-well">
           <div className={`avatar-inner ${avatarClass(id)}`}>{avatarText(name)}</div>
         </div>
@@ -1196,6 +1251,21 @@ function AgentCard({ agent, onDragStart, onDragOver, onDrop, onDragEnd, isDraggi
         </div>
       )}
 
+      {expanded && (
+        <div className="expand-panel">
+          <div className="expand-task-full">{taskText}</div>
+          {activeSubs.length > 0 && (
+            <div className="expand-subs">
+              {activeSubs.map(sa => (
+                <div className="expand-sub-row" key={sa.sessionId}>
+                  <div className="subagent-dot" />
+                  <span className="subagent-label">{sa.label || sa.sessionId.slice(0,24)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="actions-row">
         <button className="btn primary" onClick={() => onLogOpen(id)}>{t.viewLog}</button>
         <button className="btn" disabled={status !== "running"} onClick={() => onPauseRequest(id)} title={t.pauseNote}>{t.pause}</button>
@@ -1348,6 +1418,7 @@ function App() {
   const [stopAgentId, setStopAgentId]   = useState(null);  // pending stop confirm
   const [pauseAgentId, setPauseAgentId] = useState(null);  // pending pause confirm
   const [toast, setToast]               = useState(null);  // {msg, ok}
+  const [electric, setElectric]         = useState(false); // jellyfish discharge
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok });
@@ -1401,6 +1472,11 @@ function App() {
     return () => clearInterval(timer);
   }, [fetchAgents]);
 
+  useEffect(() => {
+    const running = agents.filter(a => a.status === "running").length;
+    document.title = running > 0 ? `[${running}] Agent Monitor` : "Agent Monitor";
+  }, [agents]);
+
   // Time ago for refresh
   const refreshAgo = (() => {
     if (!lastRefresh) return t.connecting;
@@ -1419,9 +1495,9 @@ function App() {
           {/* Header */}
           <div className="header">
             <div className="header-left">
-              <JellyfishLogo running={agents.some(a => a.status === 'running')} />
+              <JellyfishLogo running={agents.some(a => a.status === 'running')} onElectric={setElectric} />
               <div>
-                <div className="header-title font-display">{t.appName}</div>
+                <div className={`header-title font-display${electric ? " electrified" : ""}`}>{t.appName}</div>
                 <div className="header-sub">{t.appSub}</div>
               </div>
             </div>
