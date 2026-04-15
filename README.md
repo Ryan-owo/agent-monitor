@@ -20,9 +20,9 @@
 
 <br>
 
-<img src="docs/screenshot-light.png" alt="Agent Monitor — Light Mode" width="100%">
+<img src="https://raw.githubusercontent.com/Ryan-owo/agent-monitor/main/docs/screenshot-light.png" alt="Agent Monitor — Light Mode" width="100%">
 <br><br>
-<img src="docs/screenshot-dark.png" alt="Agent Monitor — Dark Mode" width="100%">
+<img src="https://raw.githubusercontent.com/Ryan-owo/agent-monitor/main/docs/screenshot-dark.png" alt="Agent Monitor — Dark Mode" width="100%">
 
 </div>
 
